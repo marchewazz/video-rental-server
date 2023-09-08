@@ -1,15 +1,18 @@
 import express, { Express, Request, Response } from 'express';
+import cors from "cors"
 import dotenv from 'dotenv';
+import ApiRouter from './routers/api/ApiRouter';
 
 dotenv.config();
 
-const app: Express = express();
+const server: Express = express();
 const port = process.env.PORT;
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Express + TypeScript Server');
-});
+server.use(cors())
+server.use(express.json());
 
-app.listen(port, () => {
+server.use("/api", ApiRouter)
+
+server.listen(port, () => {
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
 });
