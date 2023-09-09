@@ -33,7 +33,7 @@ export default class UsersController {
             }
             
             await collection.insertOne({
-                userID: generateID(collection),
+                userID: await generateID(collection),
                 userEmail: userData.userEmail,
                 userNick: userData.userNick,
                 userPassword: await bcrypt.hash(userData.userPassword, 10),
@@ -52,7 +52,7 @@ export default class UsersController {
             return res.send({ message: "registeredSuccess"})
         } catch(e) {
             console.log(e);
-            return res.send({ message: "error"})
+            return res.send({ message: "errorMessage"})
         } finally {
             client.close()
         }
