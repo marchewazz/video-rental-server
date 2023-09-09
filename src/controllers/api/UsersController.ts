@@ -1,8 +1,8 @@
-import { Collection, MongoClient } from "mongodb";
+import { Collection, MongoClient, ObjectId } from "mongodb";
 import RegisterFormData from "../../models/RegisterFormData.model";
 import generateRandomString from "../../util/randomString";
 import bcrypt from "bcrypt";
-import RegisterUserData from "../../models/RegisterUserData.model";
+import LoginFormData from "../../models/LoginFormData.model";
 
 export default class UsersController {
 
@@ -46,7 +46,8 @@ export default class UsersController {
                 ],
                 userFriends: [],
                 userInvitations: [],
-                userRentals: []
+                userRentals: [],
+                userTokens: []
             }) 
             
             return res.send({ message: "registeredSuccess"})
@@ -57,7 +58,58 @@ export default class UsersController {
             client.close()
         }
     }
-    loginUser() {
-        console.log(`login`);   
+    async loginUser(req: Request, res: any): Promise<Response>  {
+        async function generateToken(collection: any): Promise<string> {
+            let token: string = "";
+
+            while (true) {
+                token = generateRandomString(24)
+                if (!(await collection.findOne({ userTokens: { $elemMatch: { token: token }} }))) {
+                    return token
+                }
+            }
+        }
+
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+        try {
+            const userData: LoginFormData = (req.body as unknown as LoginFormData);
+            let dbUserData;
+
+            const collection = (await client.connect()).db("video-rental").collection("users")
+
+            if (userData.userNick.includes("@")){
+                if (!(await collection.findOne({ userEmail: userData.userNick }))) {
+                    return res.send({ message: "emailNotExists"})
+                } else {
+                    dbUserData = await collection.findOne({ userEmail: userData.userNick })
+                }
+                
+            } else {
+                if (!(await collection.findOne({ userNick: userData.userNick }))) {
+                    return res.send({ message: "nickNotExists"})
+                } else {
+                    dbUserData = await collection.findOne({ userNick: userData.userNick })
+                }
+            }
+            if (dbUserData) {
+                if (await bcrypt.compare(userData.userPassword, dbUserData.userPassword)) {
+                    const token: string = await generateToken(collection);
+                    
+                    await collection.updateOne({ userID: dbUserData.userID }, 
+                        { $push: { "userTokens": { token: token, tokenExpiringDate: new Date().setDate(new Date().getDate() + 30)}}}
+                    )
+                    return res.send({ message: "logged", token: token})
+                } else {
+                    return res.send({ message: "wrongPassword"})
+                }
+            } else {
+                return res.send({ message: "errorMessage"}) 
+            }
+        } catch(e) {
+            console.log(e);
+            return res.send({ message: "errorMessage"})
+        } finally {
+            client.close()
+        } 
     }
 }
