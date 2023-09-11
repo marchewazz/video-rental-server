@@ -1,18 +1,43 @@
 import express, { Express, Request, Response } from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+
 import cors from "cors"
 import dotenv from 'dotenv';
+
 import ApiRouter from './routers/api/ApiRouter';
+import UsersController from './controllers/api/UsersController';
 
 dotenv.config();
 
-const server: Express = express();
+const app: Express = express();
+const server = createServer(app)
+const webSocketServer = new Server(server, {
+  cors: {
+    origin: "*",
+    credentials: true
+  }
+})
+
 const port = process.env.PORT;
 
-server.use(cors())
-server.use(express.json());
+app.use(cors())
+app.use(express.json());
 
-server.use("/api", ApiRouter)
+app.use("/api", ApiRouter)
 
 server.listen(port, () => {
+
+  const us: UsersController = new UsersController()
+
+  webSocketServer.on('connection', function(connection) {
+    connection.on("getUserDataByToken", async (data) => {
+      connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+    })
+    connection.on('disconnect', function() {
+      console.log(`disconnect`);
+    });
+    console.log(`Recieved a new connection.`);
+  });
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
 });

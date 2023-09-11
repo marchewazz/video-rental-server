@@ -3,6 +3,7 @@ import RegisterFormData from "../../models/RegisterFormData.model";
 import generateRandomString from "../../util/randomString";
 import bcrypt from "bcrypt";
 import LoginFormData from "../../models/LoginFormData.model";
+import RegisterUserData from "../../models/RegisterUserData.model";
 
 export default class UsersController {
 
@@ -37,7 +38,7 @@ export default class UsersController {
                 userEmail: userData.userEmail,
                 userNick: userData.userNick,
                 userPassword: await bcrypt.hash(userData.userPassword, 10),
-                userAmount: 0.00,
+                userBalance: 0.00,
                 userLists: [
                     {
                         name: "default-favorites",
@@ -58,6 +59,7 @@ export default class UsersController {
             client.close()
         }
     }
+
     async loginUser(req: Request, res: any): Promise<Response>  {
         async function generateToken(collection: any): Promise<string> {
             let token: string = "";
@@ -111,5 +113,26 @@ export default class UsersController {
         } finally {
             client.close()
         } 
+    }
+
+    async getUserDataByToken(token: string | string[]): Promise<any> {
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+        try {
+            const collection = (await client.connect()).db("video-rental").collection("users")
+
+            const userData = await collection.findOne({ "userTokens.token": token })
+            if (userData) {
+                await collection.updateOne({ "userTokens.token": token }, { 
+                    "$set": { "userTokens.$.tokenExpiringDate": new Date().setDate(new Date().getDate() + 30) }
+                })
+                return { message: "userData", userData: userData }
+            } else {
+                return { message: "invalidToken" }
+            }
+        } catch(e) {
+            return { message: "error" }
+        } finally {
+            client.close()
+        }
     }
 }

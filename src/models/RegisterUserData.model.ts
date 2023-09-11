@@ -9,7 +9,7 @@ export default interface RegisterUserData {
     userNick: string;
     userEmail: string;
     userPassword: string;
-    userAmount: number;
+    userBalance: number;
     userLists: List[];
     userRentals: Rental[];
     userInvitations: Intivation[];
