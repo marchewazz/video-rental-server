@@ -38,15 +38,15 @@ export default class ShowsController {
                     return ({ message: "rented" })
                 } else {
                     session.abortTransaction()
-                    return ({ message: "no money" })
+                    return ({ message: "noMoney" })
                 }
             } else {
                 session.abortTransaction()
-                return ({ message: "no data" })
+                return ({ message: "errorMessage" })
             } 
         }).catch((e) => {
             console.log(e);
-            return ({ message: "error" })
+            return ({ message: "errorMessage" })
         })
     }
     

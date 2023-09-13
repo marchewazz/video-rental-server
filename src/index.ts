@@ -37,11 +37,11 @@ server.listen(port, () => {
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
     })
     connection.on("rentShow", async (data) => {
-      connection.emit("rentShow", await ss.rentVideo(data, connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", await ss.rentVideo(data, connection.handshake.query.token || ""))
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
     })
     connection.on("cancelRent", async (data) => {
-      connection.emit("cancelRent", await ss.cancelRent(data, connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", await ss.cancelRent(data, connection.handshake.query.token || ""))
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
     })
     connection.on('disconnect', function() {
