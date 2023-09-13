@@ -1,6 +1,5 @@
 import { MongoClient } from "mongodb";
 import generateRandomString from "../../util/randomString";
-import e from "express";
 
 export default class ShowsController {
     public async rentVideo(data: any, token: string | string[]) {
@@ -49,5 +48,35 @@ export default class ShowsController {
             console.log(e);
             return ({ message: "error" })
         })
+    }
+    
+    public async cancelRent(data: any, token: string | string[]) {
+        
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+        
+        try {
+            const collection = (await client.connect()).db("video-rental").collection("users")
+
+            await collection.updateOne({ "userTokens.token": token, "userRentals.rentalID": data.rentalID }, {
+                $set: {
+                    "userRentals.$[xxx].rentalStatus": "cancelled",
+                    "userRentals.$[xxx].rentalCancelledDate": new Date().getTime()
+                }, 
+                $unset: {
+                    "userRentals.$[xxx].rentalExpiring": 1
+                }
+            }, {
+                arrayFilters: [
+                    { "xxx.rentalID": data.rentalID }
+                ]
+            })
+
+            return ({ message: "rentalCancelled"})
+        } catch(e) {
+            console.log(e);
+            return ({ message: "errorMessage"})
+        } finally {
+            client.close()
+        } 
     }
 }
