@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 
 import ApiRouter from './routers/api/ApiRouter';
 import UsersController from './controllers/api/UsersController';
+import ShowsController from './controllers/ws/ShowsController';
 
 dotenv.config();
 
@@ -29,9 +30,18 @@ app.use("/api", ApiRouter)
 server.listen(port, () => {
 
   const us: UsersController = new UsersController()
+  const ss: ShowsController = new ShowsController()
 
   webSocketServer.on('connection', function(connection) {
     connection.on("getUserDataByToken", async (data) => {
+      connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+    })
+    connection.on("rentShow", async (data) => {
+      connection.emit("rentShow", await ss.rentVideo(data, connection.handshake.query.token || ""))
+      connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+    })
+    connection.on("cancelRent", async (data) => {
+      connection.emit("cancelRent", await ss.cancelRent(data, connection.handshake.query.token || ""))
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
     })
     connection.on('disconnect', function() {
