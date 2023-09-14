@@ -45,6 +45,16 @@ server.listen(port, () => {
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
     })
 
+    connection.on("addToFavorites", async (data) => {
+      connection.emit("emitPopUpNotification", await ss.addToFavorites(data, connection.handshake.query.token || ""))
+      connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+    })
+
+    connection.on("removeFromFavorites", async (data) => {
+      connection.emit("emitPopUpNotification", await ss.removeFromFavorites(data, connection.handshake.query.token || ""))
+      connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+    })
+
     connection.on("addMoney", async (data) => {
       connection.emit("emitPopUpNotification", await us.addMoney(data, connection.handshake.query.token || ""))
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
