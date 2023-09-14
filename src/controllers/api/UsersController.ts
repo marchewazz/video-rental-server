@@ -135,4 +135,26 @@ export default class UsersController {
             client.close()
         }
     }
+
+    public async addMoney(data: any, token: string | string[]) {
+        
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+        
+        try {
+            const collection = (await client.connect()).db("video-rental").collection("users")
+
+            await collection.updateOne({ "userTokens.token": token }, {
+                $inc: {
+                    "userBalance": Number(data.money)
+                }
+            },)
+
+            return ({ message: "moneyAdded"})
+        } catch(e) {
+            console.log(e);
+            return ({ message: "errorMessage"})
+        } finally {
+            client.close()
+        } 
+    }
 }
