@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import ApiRouter from './routers/api/ApiRouter';
 import UsersController from './controllers/api/UsersController';
 import ShowsController from './controllers/ws/ShowsController';
+import ListsController from './controllers/ws/ListsController';
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ server.listen(port, () => {
 
   const us: UsersController = new UsersController()
   const ss: ShowsController = new ShowsController()
+  const ls: ListsController = new ListsController()
 
   webSocketServer.on('connection', function(connection) {
     connection.on("getUserDataByToken", async (data) => {
@@ -46,12 +48,12 @@ server.listen(port, () => {
     })
 
     connection.on("addToFavorites", async (data) => {
-      connection.emit("emitPopUpNotification", await ss.addToFavorites(data, connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", await ls.addToFavorites(data, connection.handshake.query.token || ""))
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
     })
 
     connection.on("removeFromFavorites", async (data) => {
-      connection.emit("emitPopUpNotification", await ss.removeFromFavorites(data, connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", await ls.removeFromFavorites(data, connection.handshake.query.token || ""))
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
     })
 

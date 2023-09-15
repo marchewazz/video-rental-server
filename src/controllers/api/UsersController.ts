@@ -9,13 +9,24 @@ export default class UsersController {
 
     async registerUser(req: Request, res: any): Promise<Response> {
 
-        async function generateID(collection: any): Promise<string> {
+        async function generateUserID(collection: any): Promise<string> {
             let userID: string = "";
 
             while (true) {
                 userID = generateRandomString(24)
                 if (!(await collection.findOne({ userID: userID }))) {
                     return userID
+                }
+            }
+        }
+
+        async function generateListID(collection: any): Promise<string> {
+            let listID: string = "";
+
+            while (true) {
+                listID = generateRandomString(24)
+                if (!(await collection.findOne({ "userLists.listID": listID }))) {
+                    return listID
                 }
             }
         }
@@ -34,15 +45,16 @@ export default class UsersController {
             }
             
             await collection.insertOne({
-                userID: await generateID(collection),
+                userID: await generateUserID(collection),
                 userEmail: userData.userEmail,
                 userNick: userData.userNick,
                 userPassword: await bcrypt.hash(userData.userPassword, 10),
                 userBalance: 0.00,
                 userLists: [
                     {
-                        name: "default-favorites",
-                        media: []
+                        listID: await(generateListID(collection)),
+                        listName: "default-favorites",
+                        listShows: []
                     }
                 ],
                 userFriends: [],
