@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from 'express';
 import { createServer } from 'http';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 
 import cors from "cors"
 import dotenv from 'dotenv';
@@ -29,6 +29,8 @@ app.use(express.json());
 app.use("/api", ApiRouter)
 
 server.listen(port, () => {
+
+  let clients: Socket[] = [];
 
   const us: UsersController = new UsersController()
   const ss: ShowsController = new ShowsController()
@@ -62,9 +64,10 @@ server.listen(port, () => {
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
     })
     connection.on('disconnect', function() {
-      console.log(`disconnect`);
+      clients = clients.filter((client: Socket) => client.id != connection.id)
     });
-    console.log(`Recieved a new connection.`);
+    clients.push(connection)
+    console.log(clients.length);
   });
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
 });
