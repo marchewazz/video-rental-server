@@ -56,4 +56,136 @@ export default class InvitationsController {
             return ({ message: "errorMessage" })
         })
     }
+
+    public async acceptInvitation(data: any, token: string | string[]) {
+
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+        
+        const session = client.startSession()
+
+        return await session.withTransaction(async () => {
+            const collection = (await client.connect()).db("video-rental").collection("users")
+
+            const userData = await collection.findOne({ "userTokens.token": token })
+   
+            if (userData) {
+                await collection.updateOne({ "userTokens.token": token } , {
+                   $pull: {
+                    "userInvitations": {
+                        "invitationID": data.invitationData.invitationID
+                    }
+                   },
+                   $push: {
+                    "userFriends": {
+                        friendsSinceDate: new Date(),
+                        friendID: data.invitationData.senderID
+                    }
+                   }
+                })
+
+                await collection.updateOne({ "userID": data.invitationData.senderID } , {
+                   $pull: {
+                    "userInvitations":  {
+                        "invitationID": data.invitationData.invitationID
+                    }
+                   },
+                   $push: {
+                    "userFriends": {
+                        friendsSinceDate: new Date(),
+                        friendID: userData.userID
+                    }
+                   }
+                })
+
+                session.commitTransaction()
+                return ({ message: "invitationAccepted", senderID: data.invitationData.senderID })
+            } else {
+                session.abortTransaction()
+                return ({ message: "errorMessage" })
+            } 
+        }).catch((e) => {
+            console.log(e);
+            return ({ message: "errorMessage" })
+        })
+    }
+
+    public async rejectInvitation(data: any, token: string | string[]) {
+
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+        
+        const session = client.startSession()
+
+        return await session.withTransaction(async () => {
+            const collection = (await client.connect()).db("video-rental").collection("users")
+
+            const userData = await collection.findOne({ "userTokens.token": token })
+   
+            if (userData) {
+                await collection.updateOne({ "userTokens.token": token } , {
+                   $pull: {
+                    "userInvitations": {
+                        "invitationID": data.invitationData.invitationID
+                    }
+                   },
+                })
+
+                await collection.updateOne({ "userID": data.invitationData.senderID } , {
+                   $pull: {
+                    "userInvitations":  {
+                        "invitationID": data.invitationData.invitationID
+                    }
+                   },
+                })
+
+                session.commitTransaction()
+                return ({ message: "invitationRejected", senderID: data.invitationData.senderID })
+            } else {
+                session.abortTransaction()
+                return ({ message: "errorMessage" })
+            } 
+        }).catch((e) => {
+            console.log(e);
+            return ({ message: "errorMessage" })
+        })
+    }
+
+    public async cancelInvitation(data: any, token: string | string[]) {
+
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+        
+        const session = client.startSession()
+
+        return await session.withTransaction(async () => {
+            const collection = (await client.connect()).db("video-rental").collection("users")
+
+            const userData = await collection.findOne({ "userTokens.token": token })
+   
+            if (userData) {
+                await collection.updateOne({ "userTokens.token": token } , {
+                   $pull: {
+                    "userInvitations": {
+                        "invitationID": data.invitationData.invitationID
+                    }
+                   },
+                })
+
+                await collection.updateOne({ "userID": data.invitationData.receiverID } , {
+                   $pull: {
+                    "userInvitations":  {
+                        "invitationID": data.invitationData.invitationID
+                    }
+                   },
+                })
+
+                session.commitTransaction()
+                return ({ message: "invitationCancelled", receiverID: data.invitationData.receiverID })
+            } else {
+                session.abortTransaction()
+                return ({ message: "errorMessage" })
+            } 
+        }).catch((e) => {
+            console.log(e);
+            return ({ message: "errorMessage" })
+        })
+    }
 }

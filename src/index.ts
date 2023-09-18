@@ -92,6 +92,54 @@ server.listen(port, () => {
       }
     })
 
+    connection.on("acceptInvitation",async (data) => {
+      const response = await is.acceptInvitation(data, connection.handshake.query.token || "")
+      connection.emit("emitPopUpNotification", response)
+      connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+
+      if (response.message === "invitationAccepted") {
+        clients.forEach(async (client: Socket) => {
+          if ("senderID" in response) {
+            if (client.handshake.query.userID === response.senderID) {
+              client.emit("getUserDataByToken", await us.getUserDataByToken(client.handshake.query.token || ""))
+            }
+          }
+        })
+      }
+    })
+
+    connection.on("rejectInvitation",async (data) => {
+      const response = await is.rejectInvitation(data, connection.handshake.query.token || "")
+      connection.emit("emitPopUpNotification", response)
+      connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+
+      if (response.message === "invitationRejected") {
+        clients.forEach(async (client: Socket) => {
+          if ("senderID" in response) {
+            if (client.handshake.query.userID === response.senderID) {
+              client.emit("getUserDataByToken", await us.getUserDataByToken(client.handshake.query.token || ""))
+            }
+          }
+        })
+      }
+    })
+
+    connection.on("cancelInvitation",async (data) => {
+      const response = await is.cancelInvitation(data, connection.handshake.query.token || "")
+      connection.emit("emitPopUpNotification", response)
+      connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+
+      if (response.message === "invitationCancelled") {
+        clients.forEach(async (client: Socket) => {
+          if ("receiverID" in response) {
+            if (client.handshake.query.userID === response.receiverID) {
+              client.emit("getUserDataByToken", await us.getUserDataByToken(client.handshake.query.token || ""))
+            }
+          }
+        })
+      }
+    })
+
     connection.on('disconnect', function() {
       clients = clients.filter((client: Socket) => client.id != connection.id)
     });
