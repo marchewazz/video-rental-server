@@ -148,6 +148,27 @@ export default class UsersController {
         }
     }
 
+    async getUserDataByID(req: Request, res: any): Promise<any> {
+        
+        const userID: any = (req.body as any).userID;
+
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+        try {
+            const collection = (await client.connect()).db("video-rental").collection("users")
+            
+            const userData = await collection.findOne({ "userID": userID })
+            if (userData) {
+                return res.send({ message: "userData", userData: userData })
+            } else {
+                return res.send({ message: "invalidUserID" })
+            }
+        } catch(e) {
+            return res.send({ message: "error" })
+        } finally {
+            client.close()
+        }
+    }
+
     public async addMoney(data: any, token: string | string[]) {
         
         const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
