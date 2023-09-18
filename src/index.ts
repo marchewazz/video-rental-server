@@ -139,6 +139,22 @@ server.listen(port, () => {
         })
       }
     })
+    
+    connection.on("deleteFriend",async (data) => {
+      const response = await is.deleteFriend(data, connection.handshake.query.token || "")
+      connection.emit("emitPopUpNotification", response)
+      connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+
+      if (response.message === "friendDeleted") {
+        clients.forEach(async (client: Socket) => {
+          if ("friendID" in response) {
+            if (client.handshake.query.userID === response.friendID) {
+              client.emit("getUserDataByToken", await us.getUserDataByToken(client.handshake.query.token || ""))
+            }
+          }
+        })
+      }
+    })
 
     connection.on('disconnect', function() {
       clients = clients.filter((client: Socket) => client.id != connection.id)

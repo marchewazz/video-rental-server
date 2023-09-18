@@ -188,4 +188,44 @@ export default class InvitationsController {
             return ({ message: "errorMessage" })
         })
     }
+
+    public async deleteFriend(data: any, token: string | string[]) {
+
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+        
+        const session = client.startSession()
+
+        return await session.withTransaction(async () => {
+            const collection = (await client.connect()).db("video-rental").collection("users")
+
+            const userData = await collection.findOne({ "userTokens.token": token })
+   
+            if (userData) {
+                await collection.updateOne({ "userTokens.token": token } , {
+                   $pull: {
+                    "userFriends": {
+                        "friendID": data.friendID
+                    }
+                   },
+                })
+
+                await collection.updateOne({ "userID": data.friendID } , {
+                   $pull: {
+                    "userFriends":  {
+                        "friendID": userData.userID
+                    }
+                   },
+                })
+
+                session.commitTransaction()
+                return ({ message: "friendDeleted", friendID: data.friendID })
+            } else {
+                session.abortTransaction()
+                return ({ message: "errorMessage" })
+            } 
+        }).catch((e) => {
+            console.log(e);
+            return ({ message: "errorMessage" })
+        })
+    }
 }
