@@ -8,5 +8,6 @@ const usersController: UsersController = new UsersController();
 
 UsersRouter.post("/register", usersController.registerUser)
 UsersRouter.post("/login", usersController.loginUser)
+UsersRouter.post("/userDataByID", usersController.getUserDataByID)
 
 export default UsersRouter;

@@ -9,6 +9,7 @@ import ApiRouter from './routers/api/ApiRouter';
 import UsersController from './controllers/api/UsersController';
 import ShowsController from './controllers/ws/ShowsController';
 import ListsController from './controllers/ws/ListsController';
+import InvitationsController from './controllers/ws/InvitationsController';
 
 dotenv.config();
 
@@ -35,8 +36,17 @@ server.listen(port, () => {
   const us: UsersController = new UsersController()
   const ss: ShowsController = new ShowsController()
   const ls: ListsController = new ListsController()
+  const is: InvitationsController = new InvitationsController()
 
   webSocketServer.on('connection', function(connection) {
+
+    us.getUserDataByToken(connection.handshake.query.token || "").then((data: any) => {
+      if (data.message === "userData") {
+        connection.handshake.query.userID = data.userData.userID
+        clients.push(connection)
+      }
+    });
+
     connection.on("getUserDataByToken", async (data) => {
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
     })
@@ -63,11 +73,28 @@ server.listen(port, () => {
       connection.emit("emitPopUpNotification", await us.addMoney(data, connection.handshake.query.token || ""))
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
     })
+
+    connection.on("sendInvitation",async (data) => {
+      const response = await is.saveInvitations(data, connection.handshake.query.token || "")
+      
+      connection.emit("emitPopUpNotification", { message: response.message })
+      connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+      if (response.message === "invitationSent") {
+        clients.forEach(async (client: Socket) => {
+          if ("receiverID" in response) {
+            if (client.handshake.query.userID === response.receiverID) {
+              response.message = "invitationReceived"
+              client.emit("emitPopUpNotification", response)
+              client.emit("getUserDataByToken", await us.getUserDataByToken(client.handshake.query.token || ""))
+            }
+          }
+        })
+      }
+    })
+
     connection.on('disconnect', function() {
       clients = clients.filter((client: Socket) => client.id != connection.id)
     });
-    clients.push(connection)
-    console.log(clients.length);
   });
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
 });
