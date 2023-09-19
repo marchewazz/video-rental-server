@@ -1,4 +1,4 @@
 export default interface List {
     name: string,
-    media: string[]
+    listShows: string[]
 }

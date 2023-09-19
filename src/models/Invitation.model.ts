@@ -1,6 +1,6 @@
-export default interface Intivation {
+export default interface Invitation {
     invitationID: string;
     invitationDate: string;
-    invitationSender: string;
-    invitationReceiver: string;
+    senderID: string;
+    receiverID: string;
 }

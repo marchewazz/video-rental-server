@@ -1,4 +1,4 @@
 export default interface Friend {
     friendID: string;
-    friendSinceDate: Date;
+    friendsSinceDate: Date;
 }
