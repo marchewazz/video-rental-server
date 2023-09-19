@@ -155,7 +155,16 @@ export default class UsersController {
         try {
             const collection = (await client.connect()).db("video-rental").collection("users")
             
-            const userData = await collection.findOne({ "userID": userID })
+            const userData = await collection.findOne({ "userID": userID }, {
+                projection: {
+                    _id: 0,
+                    userBalance: 0,
+                    userEmail: 0,
+                    userPassword: 0,
+                    userTokens: 0
+                }
+                
+            })
             if (userData) {
                 return res.send({ message: "userData", userData: userData })
             } else {
