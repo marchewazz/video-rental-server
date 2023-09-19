@@ -3,7 +3,6 @@ import RegisterFormData from "../../models/RegisterFormData.model";
 import generateRandomString from "../../util/randomString";
 import bcrypt from "bcrypt";
 import LoginFormData from "../../models/LoginFormData.model";
-import RegisterUserData from "../../models/RegisterUserData.model";
 
 export default class UsersController {
 
@@ -35,7 +34,7 @@ export default class UsersController {
         try {
             const userData: RegisterFormData = (req.body as unknown as RegisterFormData);
             
-            const collection = (await client.connect()).db("video-rental").collection("users")
+            const collection: Collection = (await client.connect()).db("video-rental").collection("users")
 
             if ((await collection.findOne({ userNick: userData.userNick }))) {
                 return res.send({ message: "nickTaken"})

@@ -4,7 +4,7 @@ import List from "./List.model";
 import Rental from "./Rental.model";
 import Token from "./Token.model";
 
-export default interface RegisterUserData {
+export default interface UserData {
     userID: string;
     userNick: string;
     userEmail: string;
