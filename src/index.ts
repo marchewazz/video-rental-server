@@ -51,34 +51,40 @@ server.listen(port, () => {
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
     })
     connection.on("rentShow", async (data) => {
-      connection.emit("emitPopUpNotification", await ss.rentVideo(data, connection.handshake.query.token || ""))
+      const response = Object.assign(await ss.rentVideo(data, connection.handshake.query.token || ""), { eventID : data.eventID })
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", response)
     })
     connection.on("cancelRent", async (data) => {
-      connection.emit("emitPopUpNotification", await ss.cancelRent(data, connection.handshake.query.token || ""))
+      const response = Object.assign(await ss.cancelRent(data, connection.handshake.query.token || ""), { eventID : data.eventID })
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", response)
     })
 
     connection.on("addToFavorites", async (data) => {
-      connection.emit("emitPopUpNotification", await ls.addToFavorites(data, connection.handshake.query.token || ""))
+      const response = Object.assign(await ls.addToFavorites(data, connection.handshake.query.token || ""), { eventID : data.eventID })
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", response)
     })
 
     connection.on("removeFromFavorites", async (data) => {
-      connection.emit("emitPopUpNotification", await ls.removeFromFavorites(data, connection.handshake.query.token || ""))
+      const response = Object.assign(await ls.removeFromFavorites(data, connection.handshake.query.token || ""), { eventID : data.eventID })
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", response)
     })
 
     connection.on("addMoney", async (data) => {
-      connection.emit("emitPopUpNotification", await us.addMoney(data, connection.handshake.query.token || ""))
+      const response = Object.assign(await us.addMoney(data, connection.handshake.query.token || ""), { eventID: data.eventID })
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", response)
     })
 
     connection.on("sendInvitation",async (data) => {
       const response = await is.saveInvitations(data, connection.handshake.query.token || "")
-      
-      connection.emit("emitPopUpNotification", { message: response.message })
+
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", { message: response.message, eventID: data.eventID })
+
       if (response.message === "invitationSent") {
         clients.forEach(async (client: Socket) => {
           if ("receiverID" in response) {
@@ -93,9 +99,9 @@ server.listen(port, () => {
     })
 
     connection.on("acceptInvitation",async (data) => {
-      const response = await is.acceptInvitation(data, connection.handshake.query.token || "")
-      connection.emit("emitPopUpNotification", response)
+      const response = Object.assign(await is.acceptInvitation(data, connection.handshake.query.token || ""), { eventID: data.eventID })
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", response)
 
       if (response.message === "invitationAccepted") {
         clients.forEach(async (client: Socket) => {
@@ -109,9 +115,9 @@ server.listen(port, () => {
     })
 
     connection.on("rejectInvitation",async (data) => {
-      const response = await is.rejectInvitation(data, connection.handshake.query.token || "")
-      connection.emit("emitPopUpNotification", response)
+      const response = Object.assign(await is.rejectInvitation(data, connection.handshake.query.token || ""), { eventID: data.eventID })
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", response)
 
       if (response.message === "invitationRejected") {
         clients.forEach(async (client: Socket) => {
@@ -125,9 +131,9 @@ server.listen(port, () => {
     })
 
     connection.on("cancelInvitation",async (data) => {
-      const response = await is.cancelInvitation(data, connection.handshake.query.token || "")
-      connection.emit("emitPopUpNotification", response)
+      const response = Object.assign(await is.cancelInvitation(data, connection.handshake.query.token || ""), { eventID: data.eventID })
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", response)
 
       if (response.message === "invitationCancelled") {
         clients.forEach(async (client: Socket) => {
@@ -141,9 +147,9 @@ server.listen(port, () => {
     })
     
     connection.on("deleteFriend",async (data) => {
-      const response = await is.deleteFriend(data, connection.handshake.query.token || "")
-      connection.emit("emitPopUpNotification", response)
+      const response = Object.assign(await is.deleteFriend(data, connection.handshake.query.token || ""), { eventID: data.eventID })
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+      connection.emit("emitPopUpNotification", response)
 
       if (response.message === "friendDeleted") {
         clients.forEach(async (client: Socket) => {
