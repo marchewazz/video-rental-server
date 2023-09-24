@@ -46,7 +46,6 @@ server.listen(port, () => {
         clients.push(connection)
       }
     });
-
     connection.on("getUserDataByToken", async (data) => {
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
     })
