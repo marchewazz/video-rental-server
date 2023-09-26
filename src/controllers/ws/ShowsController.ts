@@ -31,6 +31,7 @@ export default class ShowsController {
                             rentalID: await generateID(collection),
                             rentalShowID: data.showID,
                             rentalExpiring: new Date().setDate(new Date().getDate() + 7),
+                            rentalStart: new Date(),
                             rentalStatus: "active"
                         }
                     }

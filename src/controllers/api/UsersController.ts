@@ -49,6 +49,7 @@ export default class UsersController {
                 userNick: userData.userNick,
                 userPassword: await bcrypt.hash(userData.userPassword, 10),
                 userBalance: 0.00,
+                userCreateDate: new Date(),
                 userLists: [
                     {
                         listID: await(generateListID(collection)),
