@@ -3,6 +3,8 @@ import RegisterFormData from "../../models/RegisterFormData.model";
 import generateRandomString from "../../util/randomString";
 import bcrypt from "bcrypt";
 import LoginFormData from "../../models/LoginFormData.model";
+import Rental from "../../models/Rental.model";
+import List from "../../models/List.model";
 
 export default class UsersController {
 
@@ -192,6 +194,79 @@ export default class UsersController {
             },)
 
             return ({ message: "moneyAdded"})
+        } catch(e) {
+            console.log(e);
+            return ({ message: "errorMessage"})
+        } finally {
+            client.close()
+        } 
+    }
+
+    public async getFriendComparasion(data: any, token: string | string[]) {
+        
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+        
+        try {
+            const collection = (await client.connect()).db("video-rental").collection("users")
+
+            const userData = await collection.findOne({ "userTokens.token": token }, { projection: {"userRentals": 1, "userLists": 1 }})
+            const friendData = await collection.findOne({ "userID": data.friendID }, { projection: {"userRentals": 1, "userLists": 1 }})
+
+            if (userData && friendData) {
+                function getBothRentedIt(): string[] {
+                    let ids: string[] = []
+                    if (userData && friendData) {
+                        for (const rental of userData.userRentals) {
+                            if (friendData.userRentals.some((friendRental: Rental) => rental.rentalShowID === friendRental.rentalShowID) && !ids.includes(rental.rentalShowID)) ids.push(rental.rentalShowID)
+                        }
+                    }
+                    
+                    return ids;
+                }      
+
+                function getBothLikeIt(): string[] {
+                    let ids: string[] = []
+                    if (userData && friendData) {
+                        const userFavorites = userData.userLists.filter((list: List) => list.listName === "default-favorites")[0].listShows;
+                        const friendFavorites = friendData.userLists.filter((list: List) => list.listName === "default-favorites")[0].listShows;
+             
+                        for (const userLike of userFavorites) {
+                            if (friendFavorites.some((friendLike: { showID: string }) => friendLike.showID === userLike.showID) && !ids.includes(userLike.showID)) ids.push(userLike.showID)
+                        }
+                    }
+                    
+                    return ids;
+                }                 
+
+                function friendRentedIt(): string[] {
+                    let ids: string[] = []
+                    if (userData && friendData) {
+                        for (const rental of friendData.userRentals) {
+                            if (!userData.userRentals.some((userRental: Rental) => rental.rentalShowID === userRental.rentalShowID) && !ids.includes(rental.rentalShowID)) ids.push(rental.rentalShowID)
+                        }
+                    }
+                    
+                    return ids;
+                }   
+
+                function friendLikeIt(): string[] {
+                    let ids: string[] = []
+                    if (userData && friendData) {
+                        const userFavorites = userData.userLists.filter((list: List) => list.listName === "default-favorites")[0].listShows;
+                        const friendFavorites = friendData.userLists.filter((list: List) => list.listName === "default-favorites")[0].listShows;
+                        
+                        for (const friendLike of friendFavorites) {
+                            if (!userFavorites.some((userLike: { showID: string }) => friendLike.showID === userLike.showID) && !ids.includes(friendLike.showID)) ids.push(friendLike.showID)
+                        }
+                    }
+                    
+                    return ids;
+                } 
+
+                return ({ message: "comparasion", bothRentedIt: getBothRentedIt(), bothLikeIt: getBothLikeIt(), friendLikeIt: friendLikeIt(), friendRentedIt: friendRentedIt()})
+            } else {
+                return ({ message: "errorMessage"})
+            }
         } catch(e) {
             console.log(e);
             return ({ message: "errorMessage"})
