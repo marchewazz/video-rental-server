@@ -10,6 +10,7 @@ import UsersController from './controllers/api/UsersController';
 import ShowsController from './controllers/ws/ShowsController';
 import ListsController from './controllers/ws/ListsController';
 import InvitationsController from './controllers/ws/InvitationsController';
+import { MongoClient } from 'mongodb';
 
 dotenv.config();
 
@@ -167,5 +168,53 @@ server.listen(port, () => {
       clients = clients.filter((client: Socket) => client.id != connection.id)
     });
   });
+
+  setInterval(async () => {
+    console.log(`db functions`);
+    
+    const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+    
+      try {
+        const collection = (await client.connect()).db("video-rental").collection("users")
+
+        await collection.updateMany({ },
+          {
+          $pull: {
+            "userTokens": {
+              "tokenExpiringDate": {
+                "$lt": new Date().getTime()
+              }
+            }
+          } as any
+        }, {
+          multi: true
+        } as any)
+
+        await collection.updateMany({ }, 
+          {
+            $set: {
+                "userRentals.$[xxx].rentalStatus": "expired",
+                "userRentals.$[xxx].rentalExpiredDate": new Date()
+            }, 
+            $unset: {
+                "userRentals.$[xxx].rentalExpiring": 1
+            },
+            } as any, 
+          {
+            arrayFilters: [
+              { "xxx.rentalExpiring": {
+                "$lt": new Date().getTime()
+              }, 
+              "xxx.rentalStatus": "active"
+              }
+          ]} as any)
+
+      } catch(e) {
+        console.log(e);
+      } finally {
+        client.close()
+      } 
+  }, 60000)
+
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
 });
