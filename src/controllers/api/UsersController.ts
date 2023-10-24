@@ -180,6 +180,37 @@ export default class UsersController {
         }
     }
 
+    async searchForUsers(req: Request, res: any): Promise<any> {
+        
+        const searchPhrase: any = (req.body as any).searchPhrase;
+
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+        try {
+            const collection = (await client.connect()).db("video-rental").collection("users")
+            
+            const users = await collection.find({ "userNick": { '$regex' : `^${searchPhrase}`, '$options' : 'i' } }, {
+                projection: {
+                    _id: 0,
+                    userBalance: 0,
+                    userEmail: 0,
+                    userPassword: 0,
+                    userTokens: 0,
+                    userLists: 0,
+                    userInvitations: 0,
+                    userRentals: 0,
+                    userCreateDate: 0,
+                    userFriends: 0
+                }
+            }).toArray()            
+
+            return res.send({ "users": users })
+        } catch(e) {
+            return res.send({ message: "error" })
+        } finally {
+            client.close()
+        }
+    }
+
     public async addMoney(data: any, token: string | string[]) {
         
         const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
