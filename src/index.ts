@@ -145,7 +145,13 @@ server.listen(port, () => {
         })
       }
     })
-    
+    connection.on("editProfile",async (data) => {
+      const response = Object.assign(await us.editNick(data, connection.handshake.query.token || ""), { eventID: data.eventID})
+      if (response.message === "profileEdited") {
+        connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
+      }
+      connection.emit("emitPopUpNotification", response)
+    })
     connection.on("deleteFriend",async (data) => {
       const response = Object.assign(await is.deleteFriend(data, connection.handshake.query.token || ""), { eventID: data.eventID })
       connection.emit("getUserDataByToken", await us.getUserDataByToken(connection.handshake.query.token || ""))
