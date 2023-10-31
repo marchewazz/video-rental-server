@@ -305,4 +305,32 @@ export default class UsersController {
             client.close()
         } 
     }
+    
+    public async editNick(data: any, token: string | string[]) {
+        
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+        
+        try {
+            const collection = (await client.connect()).db("video-rental").collection("users")
+
+            const userData = await collection.findOne({ "userTokens.token": token })
+
+            if (userData) {
+                const possibleNickTaken = await collection.findOne({ "userNick": data.newNick})
+
+                if (possibleNickTaken) {
+                    return ({ message: "nickTaken" })
+                } else {
+                    await collection.updateOne({ "userTokens.token": token }, { $set: { "userNick": data.newNick }})
+                    return ({ message: "profileEdited"})
+                }
+            }
+            return ({ message: "errorMessage"})
+        } catch(e) {
+            console.log(e);
+            return ({ message: "errorMessage"})
+        } finally {
+            client.close()
+        } 
+    }
 }
