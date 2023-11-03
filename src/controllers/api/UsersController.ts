@@ -7,7 +7,6 @@ import Rental from "../../models/Rental.model";
 import List from "../../models/List.model";
 
 export default class UsersController {
-
     async registerUser(req: Request, res: any): Promise<Response> {
 
         async function generateUserID(collection: any): Promise<string> {
@@ -332,5 +331,24 @@ export default class UsersController {
         } finally {
             client.close()
         } 
+    }
+
+    async logoutUser(token: string | string[]) {
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+        try {
+            const collection = (await client.connect()).db("video-rental").collection("users")
+
+            await collection.updateOne({ "userTokens.token": token}, {
+                $pull: {
+                    "userTokens" : {
+                        "token": token
+                    }
+                }
+            })
+        } catch(e) {
+            return { message: "error" }
+        } finally {
+            client.close()
+        }
     }
 }

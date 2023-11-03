@@ -170,6 +170,9 @@ server.listen(port, () => {
     connection.on("getComparasions", async (data) => {
       connection.emit("getComparasions", await us.getFriendComparasion(data, connection.handshake.query.token || ""))
     })
+    connection.on("logout", () => {
+      us.logoutUser(connection.handshake.query.token || "")
+    })
     connection.on('disconnect', function() {
       clients = clients.filter((client: Socket) => client.id != connection.id)
     });
