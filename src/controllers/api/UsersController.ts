@@ -49,7 +49,7 @@ export default class UsersController {
                 userEmail: userData.userEmail,
                 userNick: userData.userNick,
                 userPassword: await bcrypt.hash(userData.userPassword, 10),
-                userBalance: 0.00,
+                userBalance: 10.00,
                 userCreateDate: new Date(),
                 userLists: [
                     {
@@ -90,7 +90,7 @@ export default class UsersController {
             const userData: LoginFormData = (req.body as unknown as LoginFormData);
             let dbUserData;
 
-            const collection = (await client.connect()).db("video-rental").collection("users")
+            const collection: Collection = (await client.connect()).db("video-rental").collection("users")
 
             if (userData.userNick.includes("@")){
                 if (!(await collection.findOne({ userEmail: userData.userNick }))) {
@@ -131,7 +131,7 @@ export default class UsersController {
     async getUserDataByToken(token: string | string[]): Promise<any> {
         const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
         try {
-            const collection = (await client.connect()).db("video-rental").collection("users")
+            const collection: Collection = (await client.connect()).db("video-rental").collection("users")
 
             const userData = await collection.findOne({ "userTokens.token": token })
             if (userData) {
@@ -155,7 +155,7 @@ export default class UsersController {
 
         const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
         try {
-            const collection = (await client.connect()).db("video-rental").collection("users")
+            const collection: Collection = (await client.connect()).db("video-rental").collection("users")
             
             const userData = await collection.findOne({ "userID": userID }, {
                 projection: {
@@ -185,7 +185,7 @@ export default class UsersController {
 
         const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
         try {
-            const collection = (await client.connect()).db("video-rental").collection("users")
+            const collection: Collection = (await client.connect()).db("video-rental").collection("users")
             
             const users = await collection.find({ "userNick": { '$regex' : `^${searchPhrase}`, '$options' : 'i' } }, {
                 projection: {
@@ -215,7 +215,7 @@ export default class UsersController {
         const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
         
         try {
-            const collection = (await client.connect()).db("video-rental").collection("users")
+            const collection: Collection = (await client.connect()).db("video-rental").collection("users")
 
             await collection.updateOne({ "userTokens.token": token }, {
                 $inc: {
@@ -237,7 +237,7 @@ export default class UsersController {
         const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
         
         try {
-            const collection = (await client.connect()).db("video-rental").collection("users")
+            const collection: Collection = (await client.connect()).db("video-rental").collection("users")
 
             const userData = await collection.findOne({ "userTokens.token": token }, { projection: {"userRentals": 1, "userLists": 1 }})
             const friendData = await collection.findOne({ "userID": data.friendID }, { projection: {"userRentals": 1, "userLists": 1 }})
@@ -310,7 +310,7 @@ export default class UsersController {
         const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
         
         try {
-            const collection = (await client.connect()).db("video-rental").collection("users")
+            const collection: Collection = (await client.connect()).db("video-rental").collection("users")
 
             const userData = await collection.findOne({ "userTokens.token": token })
 
@@ -336,7 +336,7 @@ export default class UsersController {
     async logoutUser(token: string | string[]) {
         const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
         try {
-            const collection = (await client.connect()).db("video-rental").collection("users")
+            const collection: Collection = (await client.connect()).db("video-rental").collection("users")
 
             await collection.updateOne({ "userTokens.token": token}, {
                 $pull: {
@@ -347,6 +347,78 @@ export default class UsersController {
             })
         } catch(e) {
             return { message: "error" }
+        } finally {
+            client.close()
+        }
+    }
+
+    async generateUser(req: Request, res: any): Promise<Response> {
+        const client: MongoClient = new MongoClient(process.env.MONGODB_URI || "")
+
+        try {
+            async function generateNick(collection: any): Promise<string> {
+                let nick: string = "";
+    
+                while (true) {
+                    nick = generateRandomString(15)
+                    if (!(await collection.findOne({ userNick: nick })) && !(await collection.findOne({ userEmail: `${nick}@generated.com` }))) {
+                        return nick
+                    }
+                }
+            }
+
+            async function generateUserID(collection: any): Promise<string> {
+                let userID: string = "";
+    
+                while (true) {
+                    userID = generateRandomString(24)
+                    if (!(await collection.findOne({ userID: userID }))) {
+                        return userID
+                    }
+                }
+            }
+    
+            async function generateListID(collection: any): Promise<string> {
+                let listID: string = "";
+    
+                while (true) {
+                    listID = generateRandomString(24)
+                    if (!(await collection.findOne({ "userLists.listID": listID }))) {
+                        return listID
+                    }
+                }
+            }
+
+            const collection: Collection = (await client.connect()).db("video-rental").collection("users")
+
+            const nick: string = await generateNick(collection)
+            const password: string = generateRandomString(20)
+
+            await collection.insertOne({
+                userID: await generateUserID(collection),
+                userEmail: `${nick}@generated.com`,
+                userNick: nick,
+                userPassword: await bcrypt.hash(password, 10),
+                userBalance: 10.00,
+                userCreateDate: new Date(),
+                userLists: [
+                    {
+                        listID: await(generateListID(collection)),
+                        listName: "default-favorites",
+                        listShows: []
+                    }
+                ],
+                userFriends: [],
+                userInvitations: [],
+                userRentals: [],
+                userTokens: []
+            }) 
+            
+
+            return res.send({ message: "registeredSuccess", email: `${nick}@generated.com`, nick: nick, password: password })
+        } catch(e) {
+            console.log(e);
+            return res.send({ message: "error"})
         } finally {
             client.close()
         }

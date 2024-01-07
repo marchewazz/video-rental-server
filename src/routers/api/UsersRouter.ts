@@ -8,6 +8,7 @@ const usersController: UsersController = new UsersController();
 
 UsersRouter.post("/register", usersController.registerUser)
 UsersRouter.post("/login", usersController.loginUser)
+UsersRouter.get("/generate", usersController.generateUser)
 UsersRouter.post("/userDataByID", usersController.getUserDataByID)
 UsersRouter.post("/search", usersController.searchForUsers)
 
